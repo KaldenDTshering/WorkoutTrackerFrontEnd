@@ -4,8 +4,7 @@
    ══════════════════════════════════════════════════════ */
 
 // ── Config ─────────────────────────────────────────────
-const API = 'https://your-railway-url.up.railway.app';
-
+const API = 'https://workouttracker-production-8b2d.up.railway.app';
 // ── State ──────────────────────────────────────────────
 let db          = [];   // in-memory copy of what the API returns
 let split       = { Mon:'', Tue:'', Wed:'', Thu:'', Fri:'', Sat:'', Sun:'' };
