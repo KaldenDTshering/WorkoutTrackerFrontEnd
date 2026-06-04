@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Workout Tracker</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+  <link rel="stylesheet" href="style.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+</head>
+<body>
+<div class="app">
+
+  <!-- ── TABS ── -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('home')"><i class="ti ti-home"></i>Home</button>
+    <button class="tab" onclick="switchTab('log')"><i class="ti ti-plus"></i>Log</button>
+    <button class="tab" onclick="switchTab('history')"><i class="ti ti-list"></i>History</button>
+    <button class="tab" onclick="switchTab('progress')"><i class="ti ti-chart-line"></i>Progress</button>
+    <button class="tab" onclick="switchTab('sheets')"><i class="ti ti-server"></i>API</button>
+  </div>
+
+  <!-- ── SYNC BANNER ── -->
+  <div id="sync-banner" style="display:none;"></div>
+
+
+  <!-- ══════════════════════════════════════════
+       HOME
+  ══════════════════════════════════════════ -->
+  <div id="page-home" class="page active">
+
+    <!-- Greeting -->
+    <div class="greeting-card">
+      <div class="greeting-left">
+        <div class="greeting-hello" id="greeting-text">Hey Kalden!</div>
+        <div class="greeting-sub" id="greeting-sub">Ready to crush it today?</div>
+      </div>
+      <div class="hero-streak">
+        <div>
+          <div class="streak-num" id="streak-num-home">0</div>
+          <div class="streak-label">day streak</div>
+        </div>
+        <i class="ti ti-flame streak-icon"></i>
+      </div>
+    </div>
+
+    <!-- Two-column layout -->
+    <div class="home-grid">
+
+      <!-- LEFT: calendar + quick stats -->
+      <div class="home-col">
+        <div class="card">
+          <div class="card-header-row">
+            <div class="section-label">Training calendar</div>
+            <div class="cal-nav">
+              <button class="btn-icon" onclick="calPrev()" aria-label="Previous month"><i class="ti ti-chevron-left"></i></button>
+              <span class="cal-month-label" id="cal-month-label"></span>
+              <button class="btn-icon" onclick="calNext()" aria-label="Next month"><i class="ti ti-chevron-right"></i></button>
+            </div>
+          </div>
+          <div id="calendar"></div>
+          <div class="cal-legend">
+            <span class="cal-legend-item"><span class="cal-dot strength"></span>Strength</span>
+            <span class="cal-legend-item"><span class="cal-dot cardio"></span>Cardio</span>
+            <span class="cal-legend-item"><span class="cal-dot mobility"></span>Mobility</span>
+            <span class="cal-legend-item"><span class="cal-dot mixed"></span>Mixed</span>
+          </div>
+        </div>
+
+        <!-- Quick stats -->
+        <div class="stat-grid" id="home-stat-grid"></div>
+      </div>
+
+      <!-- RIGHT: split planner + today's plan -->
+      <div class="home-col">
+        <div class="card">
+          <div class="section-label">My workout split</div>
+          <div id="split-display"></div>
+          <button class="btn btn-sm" onclick="toggleSplitEdit()" id="split-edit-btn" style="margin-top:10px;">
+            <i class="ti ti-edit"></i>Edit split
+          </button>
+
+          <div id="split-editor" style="display:none; margin-top:14px;">
+            <div class="split-rows" id="split-rows"></div>
+            <button class="btn btn-fire btn-sm" onclick="saveSplit()" style="margin-top:10px;">
+              <i class="ti ti-check"></i>Save split
+            </button>
+          </div>
+        </div>
+
+        <!-- Today's plan -->
+        <div class="card">
+          <div class="section-label">Today's plan</div>
+          <div id="todays-plan"></div>
+        </div>
+
+        <!-- Recent activity -->
+        <div class="card">
+          <div class="section-label">Recent sessions</div>
+          <div id="recent-sessions"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       LOG
+  ══════════════════════════════════════════ -->
+  <div id="page-log" class="page">
+    <div class="card">
+      <div class="section-label">New entry</div>
+
+      <div class="cat-pill-row">
+        <button class="cat-pill active-strength" id="pill-strength" onclick="setCat('strength')">
+          <i class="ti ti-barbell"></i>Strength
+        </button>
+        <button class="cat-pill" id="pill-cardio" onclick="setCat('cardio')">
+          <i class="ti ti-run"></i>Cardio
+        </button>
+        <button class="cat-pill" id="pill-mobility" onclick="setCat('mobility')">
+          <i class="ti ti-arrows-move"></i>Mobility
+        </button>
+      </div>
+      <input type="hidden" id="ex-cat" value="strength"/>
+
+      <div class="row">
+        <div class="ac-wrap">
+          <div class="field">
+            <label>Exercise</label>
+            <input id="ex-name" type="text" placeholder="e.g. Bench press" autocomplete="off"
+              oninput="onNameInput()" onkeydown="onNameKey(event)" onfocus="onNameInput()"/>
+          </div>
+          <div class="ac-list" id="ac-list"></div>
+        </div>
+        <div class="field">
+          <label>Date</label>
+          <input id="ex-date" type="date"/>
+        </div>
+      </div>
+
+      <div id="fields-strength" class="row">
+        <div class="field"><label>Sets</label><input id="ex-sets" type="number" min="1" placeholder="3" style="width:75px;"/></div>
+        <div class="field"><label>Reps</label><input id="ex-reps" type="number" min="1" placeholder="10" style="width:75px;"/></div>
+        <div class="field"><label>Weight (kg)</label><input id="ex-weight" type="number" min="0" step="0.5" placeholder="60" style="width:90px;"/></div>
+        <div class="field"><label>Duration (min)</label><input id="ex-dur-s" type="number" min="0" placeholder="45" style="width:90px;"/></div>
+      </div>
+
+      <div id="fields-cardio" class="row" style="display:none;">
+        <div class="field"><label>Distance (km)</label><input id="ex-dist" type="number" min="0" step="0.1" placeholder="5.0" style="width:105px;" oninput="calcPace()"/></div>
+        <div class="field"><label>Duration (min)</label><input id="ex-dur-c" type="number" min="0" placeholder="30" style="width:90px;" oninput="calcPace()"/></div>
+        <div class="field"><label>Pace (min/km)</label><input id="ex-pace" type="text" placeholder="auto" style="width:90px;" readonly/></div>
+      </div>
+
+      <div id="fields-mobility" class="row" style="display:none;">
+        <div class="field"><label>Duration (min)</label><input id="ex-dur-m" type="number" min="0" placeholder="20" style="width:90px;"/></div>
+        <div class="field" style="flex:1;min-width:160px;"><label>Notes (optional)</label><input id="ex-notes" type="text" placeholder="e.g. yoga, stretching"/></div>
+      </div>
+
+      <div class="row" style="margin-bottom:0;">
+        <button class="btn btn-fire" onclick="addEntry()"><i class="ti ti-check"></i>Save workout</button>
+      </div>
+      <div id="log-msg" class="log-msg"></div>
+    </div>
+
+    <div id="ex-panel"></div>
+    <div id="today-list"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       HISTORY
+  ══════════════════════════════════════════ -->
+  <div id="page-history" class="page">
+    <div class="filter-row">
+      <select id="hist-cat" onchange="renderHistory()">
+        <option value="">All categories</option>
+        <option value="strength">Strength</option>
+        <option value="cardio">Cardio</option>
+        <option value="mobility">Mobility</option>
+      </select>
+      <select id="hist-ex" onchange="renderHistory()"><option value="">All exercises</option></select>
+      <button class="btn btn-sm" onclick="clearHistFilters()">Clear</button>
+    </div>
+    <div id="history-list"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       PROGRESS
+  ══════════════════════════════════════════ -->
+  <div id="page-progress" class="page">
+    <div class="stat-grid" id="prog-stat-grid"></div>
+
+    <!-- Calendar heatmap -->
+    <div class="card" style="margin-bottom:1rem;">
+      <div class="card-header-row">
+        <div class="section-label">Training calendar</div>
+        <div class="cal-nav">
+          <button class="btn-icon" onclick="progCalPrev()" aria-label="Previous month"><i class="ti ti-chevron-left"></i></button>
+          <span class="cal-month-label" id="prog-cal-month-label"></span>
+          <button class="btn-icon" onclick="progCalNext()" aria-label="Next month"><i class="ti ti-chevron-right"></i></button>
+        </div>
+      </div>
+      <div id="prog-calendar"></div>
+      <div class="cal-legend">
+        <span class="cal-legend-item"><span class="cal-dot strength"></span>Strength</span>
+        <span class="cal-legend-item"><span class="cal-dot cardio"></span>Cardio</span>
+        <span class="cal-legend-item"><span class="cal-dot mobility"></span>Mobility</span>
+        <span class="cal-legend-item"><span class="cal-dot mixed"></span>Mixed</span>
+      </div>
+    </div>
+
+    <!-- Exercise chart -->
+    <div class="filter-row">
+      <select id="prog-ex" onchange="renderProgress()"><option value="">— pick an exercise —</option></select>
+      <select id="prog-metric" onchange="renderProgress()">
+        <option value="auto">Auto (best metric)</option>
+        <option value="weight">Max weight (kg)</option>
+        <option value="distance">Distance (km)</option>
+        <option value="duration">Duration (min)</option>
+        <option value="volume">Volume (sets×reps×kg)</option>
+        <option value="reps">Total reps</option>
+      </select>
+    </div>
+    <div id="pr-hero-section"></div>
+    <div id="pr-meta-section"></div>
+    <div class="chart-wrap">
+      <canvas id="prog-chart" role="img" aria-label="Progress chart for selected exercise">Log workouts to see progress.</canvas>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       API STATUS
+  ══════════════════════════════════════════ -->
+  <div id="page-sheets" class="page">
+
+    <div class="card">
+      <div class="section-label" style="margin-bottom:12px;">API connection</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <span id="api-status-dot" style="width:10px;height:10px;border-radius:50%;background:#888;flex-shrink:0;"></span>
+        <span id="api-status-text" style="font-size:13px;color:var(--text2);">Checking…</span>
+        <button class="btn btn-sm" onclick="checkAPIStatus()" style="margin-left:auto;">
+          <i class="ti ti-refresh"></i>Refresh
+        </button>
+      </div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.8;">
+        <div><strong style="color:var(--text);">API URL:</strong> http://localhost:3000</div>
+        <div><strong style="color:var(--text);">Database:</strong> MySQL — workout_tracker</div>
+        <div><strong style="color:var(--text);">Total entries:</strong> <span id="api-total">—</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label" style="margin-bottom:12px;">How the stack works</div>
+      <div style="font-size:13px;color:var(--text2);line-height:2;">
+        <div><strong style="color:var(--text);">Frontend</strong> (this app) → sends HTTP requests to the API</div>
+        <div><strong style="color:var(--text);">Node/Express API</strong> (server.js) → receives requests, talks to MySQL</div>
+        <div><strong style="color:var(--text);">MySQL</strong> (workout_tracker DB) → stores all your workout data</div>
+      </div>
+      <div style="margin-top:12px;background:var(--bg2);border-radius:var(--r);padding:12px;font-family:monospace;font-size:12px;color:var(--text2);line-height:1.9;border:0.5px solid var(--border);">
+        GET  /workouts      → fetch all workouts<br>
+        POST /workouts      → save a new workout<br>
+        DELETE /workouts/:id → delete a workout
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label" style="margin-bottom:10px;">Actions</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-fire" onclick="fetchWorkouts()">
+          <i class="ti ti-cloud-download"></i>Reload data from API
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- /.app -->
+<script src="app.js"></script>
+</body>
+</html>
