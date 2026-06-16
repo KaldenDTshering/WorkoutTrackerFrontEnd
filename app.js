@@ -37,11 +37,14 @@ async function fetchWorkouts() {
   try {
     const res  = await fetch(`${API}/workouts`);
     const data = await res.json();
-    db = data;
+    db = Array.isArray(data) ? data : [];
     hideBanner();
     refreshAll();
   } catch(e) {
+    db = [];
+    hideBanner();
     showBanner('Could not connect to the API. Is the server running?', 'error');
+    refreshAll();
   }
 }
 
@@ -55,9 +58,8 @@ async function pushWorkout(entry) {
     });
     const json = await res.json();
     if (!json.ok) throw new Error('API returned not ok');
-    // Add to local in-memory db so UI updates instantly
-    db.unshift(entry);
-    refreshAll();
+    // Reload from API so local db has correct session_id and date from server
+    await fetchWorkouts();
   } catch(e) {
     showBanner('Failed to save workout. Is the server running?', 'error');
   }
@@ -481,12 +483,13 @@ function closeExPanel() {
 }
 
 async function addEntry() {
-  const name=document.getElementById('ex-name').value.trim();
-  const cat =document.getElementById('ex-cat').value;
-  const date=document.getElementById('ex-date').value||today();
+  const name          =document.getElementById('ex-name').value.trim();
+  const cat           =document.getElementById('ex-cat').value;
+  const date          =document.getElementById('ex-date').value||today();
+  const session_number=parseInt(document.getElementById('ex-session-number').value)||1;
   if (!name) { showMsg('Enter an exercise name first.',true); return; }
 
-  let entry={id:Date.now(),name,cat,date,sets:0,reps:0,weight:0,dur:0,dist:0,pace:'',notes:''};
+  let entry={name,cat,date,session_number,sets:0,reps:0,weight:0,dur:0,dist:0,pace:'',notes:''};
   if (cat==='strength') {
     entry.sets  =parseInt(document.getElementById('ex-sets').value)||0;
     entry.reps  =parseInt(document.getElementById('ex-reps').value)||0;
